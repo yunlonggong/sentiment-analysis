@@ -2,16 +2,17 @@
 #training the model.
 #process--->1.load data(X:list of lint,y:int). 2.create session. 3.feed data. 4.training (5.validation) ,(6.prediction)
 import tensorflow as tf
-import numpy as np
-from p7_TextCNN_model import TextCNN
+from text_cnn_model import TextCNN
 import os
-from gensim.models import word2vec
+from data_util import *
+import gensim
+from config import *
 
 #configuration
 FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
-tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.")
+tf.app.flags.DEFINE_integer("vocab_size",3000000,"maximum vocab size.")
 
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate")
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") #批处理的大小 32-->128
@@ -19,27 +20,28 @@ tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay le
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_string("ckpt_dir","text_cnn_title_desc_checkpoint/","checkpoint location for the model")
 tf.app.flags.DEFINE_integer("sentence_len",100,"max sentence length")
-tf.app.flags.DEFINE_integer("embed_size",128,"embedding size")
+tf.app.flags.DEFINE_integer("embed_size",300,"embedding size")
 tf.app.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_embedding",True,"whether to use embedding or not.")
 tf.app.flags.DEFINE_integer("num_filters", 128, "number of filters") #256--->512
-tf.app.flags.DEFINE_string("word2vec_model_path","word2vec-title-desc.bin","word2vec's vocabulary and vectors")
+tf.app.flags.DEFINE_string("word2vec_model_path", word2vec_path, "word2vec's vocabulary and vectors")
 tf.app.flags.DEFINE_string("name_scope","cnn","name scope value.")
-tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_integer("num_classes",2,"num_classes of output.")
+tf.app.flags.DEFINE_float("rate_data_train", 0.9, "rate of data to train, for example, 0.9 of the train data to train, and 0.1 of the train data to test when training.")
 filter_sizes=[6,7,8]
 
 #1.load data(X:list of lint,y:int). 2.create session. 3.feed data. 4.training (5.validation) ,(6.prediction)
 def main(_):
     trainX, trainY, testX, testY = None, None, None, None
-    word2vec_model = word2vec.load(FLAGS.word2vec_model_path, kind='bin')
+    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(FLAGS.word2vec_model_path, binary=True)
     word2vec_index2word = word2vec_model.index2word
     vocab_size = len(word2vec_index2word)
     num_classes = FLAGS.num_classes
-    trainX, trainY = train
-    testX, testY = test
+    review, sentiment = load_data_for_text_cnn(data_path + "labeledTrainData.tsv", word2vec_model, True)
+    trainX, trainY = review[0 : int(len(review) * FLAGS.rate_data_train)], sentiment[0 : int(len(review) * FLAGS.rate_data_train)]
+    testX, testY = review[int(len(review) * FLAGS.rate_data_train) : len(review)], sentiment[int(len(review) * FLAGS.rate_data_train) : len(review)]
     #print some message for debug purpose
     print("length of training data:",len(trainX),";length of validation data:",len(testX))
     print("trainX[0]:", trainX[0])
@@ -52,8 +54,8 @@ def main(_):
     config.gpu_options.allow_growth=True
     with tf.Session(config=config) as sess:
         #Instantiate Model
-        textCNN=TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
-                        FLAGS.decay_rate,FLAGS.sentence_len,vocab_size,FLAGS.embed_size,FLAGS.is_training,multi_label_flag=FLAGS.multi_label_flag)
+        textCNN = TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
+                        FLAGS.decay_rate,FLAGS.sentence_len,vocab_size,FLAGS.embed_size)
         #Initialize Save
         saver=tf.train.Saver()
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
@@ -79,10 +81,7 @@ def main(_):
                 if epoch==0 and counter==0:
                     print("trainX[start:end]:",trainX[start:end])
                 feed_dict = {textCNN.input_x: trainX[start:end],textCNN.dropout_keep_prob: 0.5,textCNN.iter: iteration,textCNN.tst: not FLAGS.is_training}
-                if not FLAGS.multi_label_flag:
-                    feed_dict[textCNN.input_y] = trainY[start:end]
-                else:
-                    feed_dict[textCNN.input_y_multilabel]=trainY[start:end]
+                feed_dict[textCNN.input_y] = trainY[start:end]
                 curr_loss,lr,_,_=sess.run([textCNN.loss_val,textCNN.learning_rate,textCNN.update_ema,textCNN.train_op],feed_dict)
                 loss,counter=loss+curr_loss,counter+1
                 if counter %50==0:

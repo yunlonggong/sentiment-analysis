@@ -103,6 +103,7 @@ def getAvgFeatureVecs(reviews, model, num_features):
     return reviewFeatureVecs
 
 
+# todo, 返回值的类型需要修改成二维的形式
 def load_data_for_text_cnn(data_path_name, model, is_training):
     '''
     :param data_path_name: can be train data or test data, path and name
@@ -140,6 +141,6 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
 
     # if return data is wrong, throw error(exception)
     if len(data_review) != len(data_sentiment):
-        raise RuntimeError("wrong when load train data, review size does not equal to sentiment data")
+        raise RuntimeError("wrong when load train data, review size does not equal to sentiment size")
 
     return data_review, data_sentiment
