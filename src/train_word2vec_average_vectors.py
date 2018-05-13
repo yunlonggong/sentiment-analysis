@@ -1,9 +1,10 @@
 from data_util import *
 import gensim
 from sklearn.ensemble import RandomForestClassifier
+from config import *
 
 
-train = pd.read_csv("../data/labeledTrainData.tsv", header=0, delimiter="\t", quoting=3)
+train = pd.read_csv(data_path + "labeledTrainData.tsv", header=0, delimiter="\t", quoting=3)
 # Get the number of reviews based on the dataframe column size
 num_reviews = train["review"].size
 
@@ -45,7 +46,7 @@ forest = forest.fit( trainDataVecs, train["sentiment"] )
 
 # predict
 print("Creating average feature vecs for test reviews")
-test = pd.read_csv( "../data/testData.tsv", header=0, delimiter="\t", quoting=3 )
+test = pd.read_csv(data_path + "testData.tsv", header=0, delimiter="\t", quoting=3 )
 clean_test_reviews = []
 for review in test["review"]:
     clean_test_reviews.append( review_to_wordlist( review, \
@@ -58,6 +59,6 @@ result = forest.predict( testDataVecs )
 
 # Write the test results
 output = pd.DataFrame( data={"id":test["id"], "sentiment":result} )
-output.to_csv( "../data/Word2Vec_AverageVectors.csv", index=False, quoting=3 )
+output.to_csv(data_path + "Word2Vec_AverageVectors.csv", index=False, quoting=3 )
 
 

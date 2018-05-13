@@ -1,11 +1,12 @@
 from sklearn.feature_extraction.text import TfidfVectorizer as TFIV
 from data_util import *
 import pandas as pd
+from config import *
 
 
-train = pd.read_csv('../data/labeledTrainData.tsv', header=0,
+train = pd.read_csv(data_path + 'labeledTrainData.tsv', header=0,
                 delimiter="\t", quoting=3)
-test = pd.read_csv('../data/testData.tsv', header=0, delimiter="\t",
+test = pd.read_csv(data_path + 'testData.tsv', header=0, delimiter="\t",
                 quoting=3 )
 
 traindata = []

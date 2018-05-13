@@ -103,22 +103,43 @@ def getAvgFeatureVecs(reviews, model, num_features):
     return reviewFeatureVecs
 
 
-def load_data(data_path, model):
+def load_data_for_text_cnn(data_path_name, model, is_training):
     '''
-    :param data_path: can be train data or test data path
+    :param data_path_name: can be train data or test data, path and name
     :param model: word2vec_model
+    :param is_training: True for train, return review and sentiment; False for test, return review;
     :return: dataX for nn input and dataY for nn output
     '''
-    train = pd.read_csv("../data/labeledTrainData.tsv", header=0, delimiter="\t", quoting=3)
+    data = pd.read_csv(data_path_name, header=0, delimiter="\t", quoting=3)
     # Get the number of reviews based on the dataframe column size
-    num_reviews = train["review"].size
+    num_reviews = data["review"].size
 
     # Initialize an empty list to hold the clean reviews
-    clean_train_reviews = []
+    data_review = []
 
     # Loop over each review; create an index i that goes from 0 to the length
     # of the movie review list
     for i in range(0, num_reviews):
         # Call our function for each one, and add the result to the list of
         # clean reviews
-        clean_train_reviews.append(review_to_words(train["review"][i]))
+        clean_review = review_to_words(data["review"][i]).split()
+        index_of_words = []
+        for j in range(0, len(clean_review)):
+            if clean_review[j] in model:
+                index_of_words.append(model.vocab[clean_review[j]].index)
+        data_review.append(index_of_words)
+
+    # for test data, has no sentiment
+    if is_training == False:
+        return data_review
+
+    # for train data, has sentiment
+    data_sentiment = []
+    for i in range(0, num_reviews):
+        data_sentiment.append(data["sentiment"][i])
+
+    # if return data is wrong, throw error(exception)
+    if len(data_review) != len(data_sentiment):
+        raise RuntimeError("wrong when load train data, review size does not equal to sentiment data")
+
+    return data_review, data_sentiment

@@ -1,0 +1,1 @@
+data_path = "D:/PythonProject/data/sentiment-analysis/"

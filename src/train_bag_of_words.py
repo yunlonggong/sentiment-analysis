@@ -3,10 +3,12 @@ from sklearn.ensemble import RandomForestClassifier
 from data_util import *
 import pandas as pd
 import numpy as np
+from config import *
+
 
 if __name__ == '__main__':
-    train = pd.read_csv('../data/labeledTrainData.tsv', header=0, delimiter="\t", quoting=3)
-    test = pd.read_csv('../data/testData.tsv', header=0, delimiter="\t", quoting=3 )
+    train = pd.read_csv(data_path + 'labeledTrainData.tsv', header=0, delimiter="\t", quoting=3)
+    test = pd.read_csv(data_path + 'testData.tsv', header=0, delimiter="\t", quoting=3 )
 
     print('The first review is:')
     print(train["review"][0])
@@ -84,5 +86,5 @@ if __name__ == '__main__':
     output = pd.DataFrame( data={"id":test["id"], "sentiment":result} )
 
     # Use pandas to write the comma-separated output file
-    output.to_csv('../data/Bag_of_Words_model.csv', index=False, quoting=3)
+    output.to_csv(data_path + 'Bag_of_Words_model.csv', index=False, quoting=3)
     print("Wrote results to Bag_of_Words_model.csv")
