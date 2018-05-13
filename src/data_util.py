@@ -143,4 +143,11 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
     if len(data_review) != len(data_sentiment):
         raise RuntimeError("wrong when load train data, review size does not equal to sentiment size")
 
+    # 1344
+    # max_length = 0
+    # for i in range(0, num_reviews):
+    #     if (len(data_review[i]) > max_length):
+    #         max_length = len(data_review[i])
+    # print(max_length)
+
     return data_review, data_sentiment

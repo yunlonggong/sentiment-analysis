@@ -19,7 +19,7 @@ tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluatin
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_string("ckpt_dir","text_cnn_title_desc_checkpoint/","checkpoint location for the model")
-tf.app.flags.DEFINE_integer("sentence_len",100,"max sentence length")
+tf.app.flags.DEFINE_integer("sentence_len",1500,"max sentence length")
 tf.app.flags.DEFINE_integer("embed_size",300,"embedding size")
 tf.app.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
