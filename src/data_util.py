@@ -3,6 +3,7 @@ import re
 from nltk.corpus import stopwords
 import numpy as np  # Make sure that numpy is imported
 import pandas as pd
+from tflearn.data_utils import pad_sequences
 
 
 def review_to_words( raw_review ):
@@ -129,6 +130,9 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
             if clean_review[j] in model:
                 index_of_words.append(model.vocab[clean_review[j]].index)
         data_review.append(index_of_words)
+
+    # data_review is a list of lists, pad_sequences can pad every list in data_review to maxlen with value
+    data_review = pad_sequences(data_review, maxlen=1500, value=0)
 
     # for test data, has no sentiment
     if is_training == False:
