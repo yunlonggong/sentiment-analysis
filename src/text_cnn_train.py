@@ -12,15 +12,15 @@ from config import *
 FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
-tf.app.flags.DEFINE_integer("vocab_size",3000000,"maximum vocab size.")
+tf.app.flags.DEFINE_integer("vocab_size",400000,"maximum vocab size.")
 
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate")
-tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") #批处理的大小 32-->128
+tf.app.flags.DEFINE_integer("batch_size", 32, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
-tf.app.flags.DEFINE_string("ckpt_dir","text_cnn_title_desc_checkpoint/","checkpoint location for the model")
-tf.app.flags.DEFINE_integer("sentence_len",1500,"max sentence length")
-tf.app.flags.DEFINE_integer("embed_size",300,"embedding size")
+tf.app.flags.DEFINE_string("ckpt_dir",data_path + "text_cnn_title_desc_checkpoint/","checkpoint location for the model")
+tf.app.flags.DEFINE_integer("sentence_len",MAX_LENGTH,"max sentence length")
+tf.app.flags.DEFINE_integer("embed_size",50,"embedding size")
 tf.app.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
@@ -35,9 +35,11 @@ filter_sizes=[6,7,8]
 #1.load data(X:list of lint,y:int). 2.create session. 3.feed data. 4.training (5.validation) ,(6.prediction)
 def main(_):
     trainX, trainY, testX, testY = None, None, None, None
-    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(FLAGS.word2vec_model_path, binary=True)
-    word2vec_index2word = word2vec_model.index2word
-    vocab_size = len(word2vec_index2word)
+    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(FLAGS.word2vec_model_path, binary=False)
+    # word2vec_index2word = word2vec_model.index2word
+    # vocab_size = len(word2vec_index2word)
+
+
     num_classes = FLAGS.num_classes
     review, sentiment = load_data_for_text_cnn(data_path + "labeledTrainData.tsv", word2vec_model, True)
     trainX, trainY = review[0 : int(len(review) * FLAGS.rate_data_train)], sentiment[0 : int(len(review) * FLAGS.rate_data_train)]
@@ -50,12 +52,13 @@ def main(_):
     print("train_y_short:", train_y_short)
 
     #2.create session.
-    config=tf.ConfigProto()
-    config.gpu_options.allow_growth=True
-    with tf.Session(config=config) as sess:
+    # config=tf.ConfigProto()
+    # config.gpu_options.allow_growth=True
+    # with tf.Session(config=config) as sess:
+    with tf.Session() as sess:
         #Instantiate Model
         textCNN = TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
-                        FLAGS.decay_rate,FLAGS.sentence_len,vocab_size,FLAGS.embed_size)
+                        FLAGS.decay_rate,FLAGS.sentence_len,FLAGS.vocab_size,FLAGS.embed_size,True)
         #Initialize Save
         saver=tf.train.Saver()
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
@@ -120,7 +123,7 @@ def do_eval(sess,textCNN,evalX,evalY,iteration):
     eval_loss,eval_counter,eval_f1_score,eval_p,eval_r=0.0,0,0.0,0.0,0.0
     batch_size=1
     for start,end in zip(range(0,number_examples,batch_size),range(batch_size,number_examples,batch_size)):
-        feed_dict = {textCNN.input_x: evalX[start:end], textCNN.input_y_multilabel:evalY[start:end],textCNN.dropout_keep_prob: 1.0,textCNN.iter: iteration,textCNN.tst: True}
+        feed_dict = {textCNN.input_x: evalX[start:end], textCNN.input_y:evalY[start:end],textCNN.dropout_keep_prob: 1.0,textCNN.iter: iteration,textCNN.tst: True}
         curr_eval_loss, logits= sess.run([textCNN.loss_val,textCNN.logits],feed_dict)#curr_eval_acc--->textCNN.accuracy
         label_list_top5 = get_label_using_logits(logits[0])
         f1_score,p,r=compute_f1_score(list(label_list_top5), evalY[start:end][0])
@@ -183,8 +186,8 @@ def assign_pretrained_word_embedding(sess,textCNN,word2vec_model):
     word2vec_index2word = word2vec_model.index2word
     vocab_size = len(word2vec_index2word)
     word2vec_dict = {}
-    for word, vector in zip(word2vec_model.vocab, word2vec_model.vectors):
-        word2vec_dict[word] = vector
+    for word in word2vec_model.vocab:
+        word2vec_dict[word] = word2vec_model[word]
     word_embedding_2dlist = [[]] * vocab_size  # create an empty word_embedding list.
     word_embedding_2dlist[0] = np.zeros(FLAGS.embed_size)  # assign empty for first word:'PAD'
     bound = np.sqrt(6.0) / np.sqrt(vocab_size)  # bound for random variables.

@@ -19,9 +19,9 @@ for i in range( 0, num_reviews ):
     clean_train_reviews.append( review_to_words( train["review"][i] ) )
 
 # 家里
-# model = gensim.models.KeyedVectors.load_word2vec_format('C:\Project\Python\model\model_word2vec_google_english\GoogleNews-vectors-negative300.bin', binary= True)
+# model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_path, binary= False)
 # 公司
-model = gensim.models.KeyedVectors.load_word2vec_format('D:\PythonProject\model\model_word2vec_google_english\GoogleNews-vectors-negative300.bin\GoogleNews-vectors-negative300.bin', binary= True)
+model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_path, binary= False)
 num_features = 300
 
 

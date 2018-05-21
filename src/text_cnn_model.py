@@ -28,6 +28,8 @@ class TextCNN:
         # add placeholder (X,label)
         self.input_x = tf.placeholder(tf.int32, [None, self.sequence_length], name="input_x")  # X
         self.input_y = tf.placeholder(tf.int32, [None, self.num_classes],name="input_y")  # y:[None,num_classes]
+        # maybe not use
+        self.input_y_multilabel = tf.placeholder(tf.float32,[None,self.num_classes], name="input_y_multilabel")  # y:[None,num_classes]. this is for multi-label classification only.
         self.dropout_keep_prob=tf.placeholder(tf.float32,name="dropout_keep_prob")
         self.iter = tf.placeholder(tf.int32) #training iteration
         self.tst=tf.placeholder(tf.bool)
@@ -125,7 +127,8 @@ class TextCNN:
         with tf.name_scope("loss"):
             #input: `logits`:[batch_size, num_classes], and `labels`:[batch_size]
             #output: A 1-D `Tensor` of length `batch_size` of the same type as `logits` with the softmax cross entropy loss.
-            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.input_y, logits=self.logits);#sigmoid_cross_entropy_with_logits.#losses=tf.nn.softmax_cross_entropy_with_logits(labels=self.input_y,logits=self.logits)
+            # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.input_y, logits=self.logits);#sigmoid_cross_entropy_with_logits.#losses=tf.nn.softmax_cross_entropy_with_logits(labels=self.input_y,logits=self.logits)
+            losses = tf.nn.softmax_cross_entropy_with_logits(labels=self.input_y, logits=self.logits);#sigmoid_cross_entropy_with_logits.#losses=tf.nn.softmax_cross_entropy_with_logits(labels=self.input_y,logits=self.logits)
             #print("1.sparse_softmax_cross_entropy_with_logits.losses:",losses) # shape=(?,)
             loss=tf.reduce_mean(losses)#print("2.loss.loss:", loss) #shape=()
             l2_losses = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'bias' not in v.name]) * l2_lambda

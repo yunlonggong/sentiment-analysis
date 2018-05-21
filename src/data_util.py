@@ -4,6 +4,7 @@ from nltk.corpus import stopwords
 import numpy as np  # Make sure that numpy is imported
 import pandas as pd
 from tflearn.data_utils import pad_sequences
+from config import *
 
 
 def review_to_words( raw_review ):
@@ -112,6 +113,7 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
     :param is_training: True for train, return review and sentiment; False for test, return review;
     :return: dataX for nn input and dataY for nn output
     '''
+    # max_length in train data is 1344
     data = pd.read_csv(data_path_name, header=0, delimiter="\t", quoting=3)
     # Get the number of reviews based on the dataframe column size
     num_reviews = data["review"].size
@@ -132,7 +134,7 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
         data_review.append(index_of_words)
 
     # data_review is a list of lists, pad_sequences can pad every list in data_review to maxlen with value
-    data_review = pad_sequences(data_review, maxlen=1500, value=0)
+    data_review = pad_sequences(data_review, maxlen= MAX_LENGTH, value=0)
 
     # for test data, has no sentiment
     if is_training == False:
@@ -141,17 +143,10 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
     # for train data, has sentiment
     data_sentiment = []
     for i in range(0, num_reviews):
-        data_sentiment.append(data["sentiment"][i])
+        data_sentiment.append([1, 0] if data["sentiment"][i] == 1 else [0, 1])
 
     # if return data is wrong, throw error(exception)
     if len(data_review) != len(data_sentiment):
         raise RuntimeError("wrong when load train data, review size does not equal to sentiment size")
-
-    # 1344
-    # max_length = 0
-    # for i in range(0, num_reviews):
-    #     if (len(data_review[i]) > max_length):
-    #         max_length = len(data_review[i])
-    # print(max_length)
 
     return data_review, data_sentiment
