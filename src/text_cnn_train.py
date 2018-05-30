@@ -11,7 +11,7 @@ from config import *
 #configuration
 FLAGS=tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
+# tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
 tf.app.flags.DEFINE_integer("vocab_size",400000,"maximum vocab size.")
 
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate")
@@ -41,7 +41,7 @@ def main(_):
 
 
     num_classes = FLAGS.num_classes
-    review, sentiment = load_data_for_text_cnn(data_path + "labeledTrainData.tsv", word2vec_model, True)
+    review, sentiment = load_data_for_text_cnn(data_path + "labeledTrainData.tsv", word2vec_model, is_training=True)
     trainX, trainY = review[0 : int(len(review) * FLAGS.rate_data_train)], sentiment[0 : int(len(review) * FLAGS.rate_data_train)]
     testX, testY = review[int(len(review) * FLAGS.rate_data_train) : len(review)], sentiment[int(len(review) * FLAGS.rate_data_train) : len(review)]
     #print some message for debug purpose
@@ -58,7 +58,7 @@ def main(_):
     with tf.Session() as sess:
         #Instantiate Model
         textCNN = TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
-                        FLAGS.decay_rate,FLAGS.sentence_len,FLAGS.vocab_size,FLAGS.embed_size,True)
+                        FLAGS.decay_rate,FLAGS.sentence_len,FLAGS.vocab_size,FLAGS.embed_size, is_training=True)
         #Initialize Save
         saver=tf.train.Saver()
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
