@@ -22,7 +22,7 @@ for i in range( 0, num_reviews ):
 # model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_path, binary= False)
 # 公司
 model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_path, binary= False)
-num_features = 300
+num_features = 50
 
 
 # ****************************************************************
