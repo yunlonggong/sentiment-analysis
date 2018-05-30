@@ -11,7 +11,7 @@ from config import *
 #configuration
 FLAGS=tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
+# tf.app.flags.DEFINE_string("traning_data_path","../data/sample_multiple_label.txt","path of traning data.") #sample_multiple_label.txt-->train_label_single100_merge
 tf.app.flags.DEFINE_integer("vocab_size",400000,"maximum vocab size.")
 
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate")
@@ -33,38 +33,42 @@ tf.app.flags.DEFINE_float("rate_data_train", 0.9, "rate of data to train, for ex
 filter_sizes=[6,7,8]
 
 #1.load data(X:list of lint,y:int). 2.create session. 3.feed data. 4.training (5.validation) ,(6.prediction)
-def main(_):
-    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(FLAGS.word2vec_model_path, binary=False)
+# def main(_):
+word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(FLAGS.word2vec_model_path, binary=False)
 
-    num_classes = FLAGS.num_classes
-    testX = load_data_for_text_cnn(data_path + "testData.tsv", word2vec_model, is_training=False)
-    #print some message for debug purpose
-    print("length of test data:",len(testX))
-    print("testX[0]:", testX[0])
+num_classes = FLAGS.num_classes
+ids, testX = load_data_for_text_cnn(data_path + "testData.tsv", word2vec_model, is_training=False)
+#print some message for debug purpose
+print("length of test data:",len(testX))
+print("testX[0]:", testX[0])
 
-    #2.create session.
-    # config=tf.ConfigProto()
-    # config.gpu_options.allow_growth=True
-    # with tf.Session(config=config) as sess:
-    with tf.Session() as sess:
-        #Instantiate Model
-        textCNN = TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
-                        FLAGS.decay_rate,FLAGS.sentence_len,FLAGS.vocab_size,FLAGS.embed_size,FLAGS.is_training)
-        #Initialize Save
-        saver=tf.train.Saver()
-        if not os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
-            print("checkpoint file not exists " + FLAGS.ckpt_dir)
+#2.create session.
+# config=tf.ConfigProto()
+# config.gpu_options.allow_growth=True
+# with tf.Session(config=config) as sess:
+with tf.Session() as sess:
+    #Instantiate Model
+    textCNN = TextCNN(filter_sizes,FLAGS.num_filters,num_classes, FLAGS.learning_rate, FLAGS.batch_size, FLAGS.decay_steps,
+                    FLAGS.decay_rate,FLAGS.sentence_len,FLAGS.vocab_size,FLAGS.embed_size,FLAGS.is_training)
+    #Initialize Save
+    saver=tf.train.Saver()
+    if not os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
+        print("checkpoint file not exists " + FLAGS.ckpt_dir)
 
-        print("Restoring Variables from Checkpoint.")
-        saver.restore(sess,tf.train.latest_checkpoint(FLAGS.ckpt_dir))
+    print("Restoring Variables from Checkpoint.")
+    saver.restore(sess,tf.train.latest_checkpoint(FLAGS.ckpt_dir))
 
-        number_of_test_data = len(testX)
-        for start, end in zip(range(0, number_of_test_data, FLAGS.batch_size),range(FLAGS.batch_size, number_of_test_data+1, FLAGS.batch_size)):
-            logits=sess.run(textCNN.logits,feed_dict={textCNN.input_x:testX[start:end],textCNN.dropout_keep_prob:1})
-            a= 1
+    number_of_test_data = len(testX)
+    predict = []
+    for start, end in zip(range(0, number_of_test_data, FLAGS.batch_size),range(FLAGS.batch_size, number_of_test_data+1, FLAGS.batch_size)):
+        logits=sess.run(textCNN.logits,feed_dict={textCNN.input_x:testX[start:end],textCNN.dropout_keep_prob:1, textCNN.tst:True})
+        predict.append(1 if logits[0][0] > logits[0][1] else 0)
+        a=1
+    output = pd.DataFrame(data={"id": ids, "sentiment": predict})
+    output.to_csv(data_path + "word2vec_text_cnn_predict.csv", index=False, quoting=3)
 
-    pass
+pass
 
 
-if __name__ == "__main__":
-    tf.app.run()
+# if __name__ == "__main__":
+#     tf.app.run()
