@@ -63,7 +63,6 @@ with tf.Session() as sess:
     for start, end in zip(range(0, number_of_test_data, FLAGS.batch_size),range(FLAGS.batch_size, number_of_test_data+1, FLAGS.batch_size)):
         logits=sess.run(textCNN.logits,feed_dict={textCNN.input_x:testX[start:end],textCNN.dropout_keep_prob:1, textCNN.tst:True})
         predict.append(1 if logits[0][0] > logits[0][1] else 0)
-        a=1
     output = pd.DataFrame(data={"id": ids, "sentiment": predict})
     output.to_csv(data_path + "word2vec_text_cnn_predict.csv", index=False, quoting=3)
 
