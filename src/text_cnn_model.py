@@ -28,11 +28,9 @@ class TextCNN:
         # add placeholder (X,label)
         self.input_x = tf.placeholder(tf.int32, [None, self.sequence_length], name="input_x")  # X
         self.input_y = tf.placeholder(tf.int32, [None, self.num_classes],name="input_y")  # y:[None,num_classes]
-        # maybe not use
-        self.input_y_multilabel = tf.placeholder(tf.float32,[None,self.num_classes], name="input_y_multilabel")  # y:[None,num_classes]. this is for multi-label classification only.
         self.dropout_keep_prob=tf.placeholder(tf.float32,name="dropout_keep_prob")
-        self.iter = tf.placeholder(tf.int32) #training iteration
-        self.tst=tf.placeholder(tf.bool)
+        self.iter = tf.placeholder(tf.int32, name="iter") #training iteration
+        self.tst=tf.placeholder(tf.bool, name="tst")
 
         self.global_step = tf.Variable(0, trainable=False, name="Global_Step")
         self.epoch_step=tf.Variable(0,trainable=False,name="Epoch_Step")
@@ -72,7 +70,7 @@ class TextCNN:
         # you can use:tf.nn.conv2d;tf.nn.relu;tf.nn.max_pool; feature shape is 4-d. feature is a new variable
         pooled_outputs = []
         for i,filter_size in enumerate(self.filter_sizes):
-            with tf.name_scope("convolution-pooling-%s" %filter_size):
+            with tf.variable_scope("convolution-pooling-%s" %filter_size, reuse=tf.AUTO_REUSE):
                 # ====>a.create filter
                 filter=tf.get_variable("filter-%s"%filter_size,[filter_size,self.embed_size,1,self.num_filters],initializer=self.initializer)
                 # ====>b.conv operation: conv2d===>computes a 2-D convolution given 4-D `input` and `filter` tensors.
