@@ -105,7 +105,6 @@ def getAvgFeatureVecs(reviews, model, num_features):
     return reviewFeatureVecs
 
 
-# todo, 返回值的类型需要修改成二维的形式
 def load_data_for_text_cnn(data_path_name, model, is_training):
     '''
     :param data_path_name: can be train data or test data, path and name
@@ -138,7 +137,7 @@ def load_data_for_text_cnn(data_path_name, model, is_training):
 
     # for test data, has no sentiment
     if is_training == False:
-        return data_review
+        return (data["id"], data_review)
 
     # for train data, has sentiment
     data_sentiment = []
